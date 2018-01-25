@@ -6,11 +6,11 @@ namespace Cvss.Net
     public interface ICvss
     {
         string VectorPrefix { get; }
-        decimal BaseScore { get; }
+        double BaseScore { get; }
         QualitativeSeverityRating QualitativeBaseScore { get; }
-        decimal TemporalScore { get; }
+        double TemporalScore { get; }
         QualitativeSeverityRating QualitativeTemporalScore { get; }
-        decimal EnvironmentalScore { get; }
+        double EnvironmentalScore { get; }
         QualitativeSeverityRating QualitativeEnvironmentalScore { get; }
         string Vector { get; }
     }

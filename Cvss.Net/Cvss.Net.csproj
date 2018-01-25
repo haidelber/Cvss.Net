@@ -10,9 +10,9 @@
     <Company />
     <Description>A utility library to handle Common Vulnerability Scoring System (CVSS) v3 Vectors and calculate their scores.</Description>
     <PackageTags>CVSS, CVSSv3</PackageTags>
-    <PackageProjectUrl>https://github.com/haidelber/Cvss.Net/issues</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/haidelber/Cvss.Net</PackageProjectUrl>
     <RepositoryUrl>https://github.com/haidelber/Cvss.Net</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
+    <RepositoryType></RepositoryType>
     <PackageLicenseUrl>https://github.com/haidelber/Cvss.Net/blob/master/LICENSE</PackageLicenseUrl>
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>

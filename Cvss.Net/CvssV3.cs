@@ -153,9 +153,9 @@ namespace Cvss.Net
         public string VectorPrefix => "CVSS:3.0";
         public double BaseScore { get; private set; }
         public QualitativeSeverityRating QualitativeBaseScore => QualitativeScore(BaseScore);
-        public double TemporalScore { get; }
+        public double TemporalScore { get; private set; }
         public QualitativeSeverityRating QualitativeTemporalScore => QualitativeScore(TemporalScore);
-        public double EnvironmentalScore { get; }
+        public double EnvironmentalScore { get; private set; }
         public QualitativeSeverityRating QualitativeEnvironmentalScore => QualitativeScore(EnvironmentalScore);
         public string Vector => BuildNormalizedVector(false);
         public string FullVector => BuildNormalizedVector(true);
@@ -165,42 +165,69 @@ namespace Cvss.Net
 
         private void CalculateScores()
         {
-            var impactSubScoreBase = 1 - (1 - ConfidentialityImpact.NumericValue()) * (1 - IntegrityImpact.NumericValue()) *
-                          (1 - AvailabilityImpact.NumericValue());
-            double impactSubScore = 0;
-            switch (Scope)
+            double ImpactSubScore(Scope scope, double subScore)
             {
-                case Scope.Unchanged:
-                    impactSubScore = 6.42 * impactSubScoreBase;
-                    break;
-                case Scope.Changed:
-                    impactSubScore = 7.52 * (impactSubScoreBase - 0.029) - 3.25 * Math.Pow(impactSubScoreBase - 0.02, 15);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(Scope), Scope, "Invalid scope");
-            }
-            var exploitabilitySubScore = 8.22 * AttackVector.NumericValue() * AttackComplexity.NumericValue() *
-                                         PrivilegesRequired.NumericValue(Scope) * UserInteraction.NumericValue();
-            if (impactSubScore <= 0)
-            {
-                BaseScore = 0;
-            }
-            else switch (Scope)
+                switch (scope)
                 {
                     case Scope.Unchanged:
-                        BaseScore = Math.Min(impactSubScore + exploitabilitySubScore, 10).RoundUp(1);
-                        break;
+                        return 6.42 * subScore;
                     case Scope.Changed:
-                        BaseScore = Math.Min(1.08 * (impactSubScore + exploitabilitySubScore), 10).RoundUp(1);
-                        break;
+                        return 7.52 * (subScore - 0.029) - 3.25 * Math.Pow(subScore - 0.02, 15);
                     default:
                         throw new ArgumentOutOfRangeException(nameof(Scope), Scope, "Invalid scope");
                 }
-            //Temporal
-            TemporalScore = BaseScore * ExploitCodeMaturity.NumericValue() * RemediationLevel.NumericValue() *
-                            ReportConfidence.NumericValue().RoundUp(1);
+            }
 
-            //TODO Environmental
+            double Score(Scope scope, double impactSub, double exploitSub)
+            {
+                if (impactSub <= 0)
+                {
+                    return 0;
+                }
+                switch (scope)
+                {
+                    case Scope.Unchanged:
+                        return Math.Min(impactSub + exploitSub, 10).RoundUp(1);
+                    case Scope.Changed:
+                        return Math.Min(1.08 * (impactSub + exploitSub), 10).RoundUp(1);
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(Scope), Scope, "Invalid scope");
+                }
+            }
+
+            double TempScore(double baseScore)
+            {
+                return (baseScore * ExploitCodeMaturity.NumericValue() * RemediationLevel.NumericValue() *
+                       ReportConfidence.NumericValue()).RoundUp(1);
+            }
+
+            var impactSubScoreBase = 1 - (1 - ConfidentialityImpact.NumericValue()) * (1 - IntegrityImpact.NumericValue()) *
+                          (1 - AvailabilityImpact.NumericValue());
+            var impactSubScore = ImpactSubScore(Scope, impactSubScoreBase);
+            var exploitabilitySubScore = 8.22 * AttackVector.NumericValue() * AttackComplexity.NumericValue() *
+                                         PrivilegesRequired.NumericValue(Scope) * UserInteraction.NumericValue();
+            BaseScore = Score(Scope, impactSubScore, exploitabilitySubScore);
+
+            //Temporal
+            TemporalScore = TempScore(BaseScore);
+
+            //Environmental
+            var impactSubScoreModified = Math.Min(0.915,
+                1 - (1 - ModifiedConfidentialityImpact.Modified(ConfidentialityImpact, EnumExtensions.NumericValue) *
+                     ConfidentialityRequirement.NumericValue()) * (1 - ModifiedIntegrityImpact.Modified(IntegrityImpact,
+                                                                       EnumExtensions
+                                                                           .NumericValue) *
+                                                                   IntegrityRequirement.NumericValue()) *
+                (1 - ModifiedAvailabilityImpact.Modified(AvailabilityImpact, EnumExtensions.NumericValue) *
+                 AvailabilityRequirement.NumericValue()));
+            var modifiedImpactSubScore = ImpactSubScore(ModifiedScope ?? Scope, impactSubScoreModified);
+            var modifiedExploitabilitySubScore =
+                8.22 * ModifiedAttackVector.Modified(AttackVector,EnumExtensions.NumericValue) *
+                ModifiedAttackComplexity.Modified(AttackComplexity,EnumExtensions.NumericValue) *
+                ModifiedPrivilegesRequired.Modified(PrivilegesRequired,required => required.NumericValue(ModifiedScope ?? Scope)) *
+                ModifiedUserInteraction.Modified(UserInteraction,EnumExtensions.NumericValue);
+            EnvironmentalScore = TempScore(
+                Score(ModifiedScope ?? Scope, modifiedImpactSubScore, modifiedExploitabilitySubScore));
         }
 
         private string BuildNormalizedVector(bool addEmptyValues)

@@ -1,5 +1,4 @@
-﻿using System;
-using Cvss.Net.Enums;
+﻿using Cvss.Net.Enums;
 
 namespace Cvss.Net
 {

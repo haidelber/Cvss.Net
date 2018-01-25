@@ -52,17 +52,17 @@ namespace Cvss.Net.Enums
             }
         }
 
-        public static double NumericValue(this PrivilegesRequired privilegesRequired, Scope scope, Scope? modifiedScope = null)
+        public static double NumericValue(this PrivilegesRequired privilegesRequired, Scope scope)
         {
             switch (privilegesRequired)
             {
                 case PrivilegesRequired.None: return 0.85;
                 case PrivilegesRequired.Low:
-                    return (scope == Scope.Changed || modifiedScope.HasValue && modifiedScope.Value == Scope.Changed)
+                    return (scope == Scope.Changed)
                         ? 0.68
                         : 0.62;
                 case PrivilegesRequired.High:
-                    return (scope == Scope.Changed || modifiedScope.HasValue && modifiedScope.Value == Scope.Changed)
+                    return (scope == Scope.Changed)
                         ? 0.50
                         : 0.27;
                 default:
@@ -245,6 +245,15 @@ namespace Cvss.Net.Enums
                 default:
                     throw new ArgumentOutOfRangeException(nameof(securityRequirement), securityRequirement, null);
             }
+        }
+
+        public static double Modified<T>(this T? value, T defaultValue, Func<T, double> func) where T : struct
+        {
+            if (value == null)
+            {
+                return func(defaultValue);
+            }
+            return func(value.Value);
         }
     }
 }

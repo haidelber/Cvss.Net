@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Stefan Haider</Authors>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <FileVersion>0.1.0.0</FileVersion>
+    <FileVersion>0.2.0.0</FileVersion>
     <Company />
     <Description>A utility library to handle Common Vulnerability Scoring System (CVSS) v3 Vectors and calculate their scores.</Description>
     <PackageTags>CVSS, CVSSv3</PackageTags>
@@ -15,12 +15,7 @@
     <RepositoryType></RepositoryType>
     <PackageLicenseUrl>https://github.com/haidelber/Cvss.Net/blob/master/LICENSE</PackageLicenseUrl>
     <NeutralLanguage>en</NeutralLanguage>
+    <IncludeSymbols>true</IncludeSymbols>
+    <!--<IncludeSource>true</IncludeSource>-->
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Models\**" />
-    <EmbeddedResource Remove="Models\**" />
-    <None Remove="Models\**" />
-  </ItemGroup>
-
 </Project>

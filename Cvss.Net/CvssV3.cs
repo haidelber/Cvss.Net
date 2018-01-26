@@ -11,39 +11,50 @@ namespace Cvss.Net
     public class CvssV3 : ICvss
     {
         #region Base score properties
-        public AttackVector AttackVector { get; }
-        public AttackComplexity AttackComplexity { get; }
-        public PrivilegesRequired PrivilegesRequired { get; }
-        public UserInteraction UserInteraction { get; }
-        public Scope Scope { get; }
-        public Impact ConfidentialityImpact { get; }
-        public Impact IntegrityImpact { get; }
-        public Impact AvailabilityImpact { get; }
+        public AttackVector AttackVector { get; internal set; }
+        public AttackComplexity AttackComplexity { get; internal set; }
+        public PrivilegesRequired PrivilegesRequired { get; internal set; }
+        public UserInteraction UserInteraction { get; internal set; }
+        public Scope Scope { get; internal set; }
+        public Impact ConfidentialityImpact { get; internal set; }
+        public Impact IntegrityImpact { get; internal set; }
+        public Impact AvailabilityImpact { get; internal set; }
         #endregion
 
         #region Temporal score properties
-        public ExploitCodeMaturity? ExploitCodeMaturity { get; }
-        public RemediationLevel? RemediationLevel { get; }
-        public ReportConfidence? ReportConfidence { get; }
+        public ExploitCodeMaturity? ExploitCodeMaturity { get; internal set; }
+        public RemediationLevel? RemediationLevel { get; internal set; }
+        public ReportConfidence? ReportConfidence { get; internal set; }
         #endregion
 
         #region Environmental score properties
-        public SecurityRequirement? ConfidentialityRequirement { get; }
-        public SecurityRequirement? IntegrityRequirement { get; }
-        public SecurityRequirement? AvailabilityRequirement { get; }
+        public SecurityRequirement? ConfidentialityRequirement { get; internal set; }
+        public SecurityRequirement? IntegrityRequirement { get; internal set; }
+        public SecurityRequirement? AvailabilityRequirement { get; internal set; }
 
-        public AttackVector? ModifiedAttackVector { get; }
-        public AttackComplexity? ModifiedAttackComplexity { get; }
-        public PrivilegesRequired? ModifiedPrivilegesRequired { get; }
-        public UserInteraction? ModifiedUserInteraction { get; }
-        public Scope? ModifiedScope { get; }
-        public Impact? ModifiedConfidentialityImpact { get; }
-        public Impact? ModifiedIntegrityImpact { get; }
-        public Impact? ModifiedAvailabilityImpact { get; }
+        public AttackVector? ModifiedAttackVector { get; internal set; }
+        public AttackComplexity? ModifiedAttackComplexity { get; internal set; }
+        public PrivilegesRequired? ModifiedPrivilegesRequired { get; internal set; }
+        public UserInteraction? ModifiedUserInteraction { get; internal set; }
+        public Scope? ModifiedScope { get; internal set; }
+        public Impact? ModifiedConfidentialityImpact { get; internal set; }
+        public Impact? ModifiedIntegrityImpact { get; internal set; }
+        public Impact? ModifiedAvailabilityImpact { get; internal set; }
         #endregion
 
         #region Constructors
-        internal CvssV3(AttackVector attackVector, AttackComplexity attackComplexity, PrivilegesRequired privilegesRequired,
+
+        internal CvssV3() { }
+
+        internal CvssV3(CvssV3 other) : this(other.AttackVector, other.AttackComplexity, other.PrivilegesRequired,
+            other.UserInteraction, other.Scope, other.ConfidentialityImpact, other.IntegrityImpact,
+            other.AvailabilityImpact, other.ExploitCodeMaturity, other.RemediationLevel, other.ReportConfidence,
+            other.ConfidentialityRequirement, other.IntegrityRequirement, other.AvailabilityRequirement, other.ModifiedAttackVector,
+            other.ModifiedAttackComplexity, other.ModifiedPrivilegesRequired, other.ModifiedUserInteraction, other.ModifiedScope,
+            other.ModifiedConfidentialityImpact, other.ModifiedIntegrityImpact, other.ModifiedAvailabilityImpact)
+        { }
+
+        public CvssV3(AttackVector attackVector, AttackComplexity attackComplexity, PrivilegesRequired privilegesRequired,
             UserInteraction userInteraction, Scope scope, Impact confidentialityImpact, Impact integrityImpact,
             Impact availabilityImpact, ExploitCodeMaturity? exploitCodeMaturity = default(ExploitCodeMaturity?),
             RemediationLevel? remediationLevel = default(RemediationLevel?), ReportConfidence? reportConfidence = default(ReportConfidence?),
@@ -78,29 +89,32 @@ namespace Cvss.Net
             ModifiedConfidentialityImpact = modifiedConfidentialityImpact;
             ModifiedIntegrityImpact = modifiedIntegrityImpact;
             ModifiedAvailabilityImpact = modifiedAvailabilityImpact;
+
+            CalculateScores();
         }
 
         public CvssV3(string vector)
         {
+            vector = vector.Trim('/', ' ');
             if (!vector.StartsWith(VectorPrefix))
             {
                 throw new ArgumentException($"Vector must begin with prefix \"{VectorPrefix}\"", nameof(vector));
             }
 
-            var paramParts = vector.Split('/').Skip(1);
-            var paramRegex = new Regex("[A-Za-z]+:[A-Za-z]{1}");
-            var parsedParams = new List<string>();
-            foreach (var paramVector in paramParts)
+            var metricParts = vector.Split('/').Skip(1);
+            var metricRegex = new Regex("[A-Za-z]+:[A-Za-z]{1}");
+            var parsedMetrics = new List<string>();
+            foreach (var metricVector in metricParts)
             {
-                if (!paramRegex.IsMatch(paramVector))
+                if (!metricRegex.IsMatch(metricVector))
                 {
-                    throw new ArgumentException($"Invalid vector-part \"{paramVector}\"", nameof(vector));
+                    throw new ArgumentException($"Invalid vector-part \"{metricVector}\"", nameof(vector));
                 }
 
-                var kv = paramVector.Split(':');
+                var kv = metricVector.Split(':');
                 var value = kv[1];
                 var key = kv[0].ToUpperInvariant();
-                parsedParams.Add(key);
+                parsedMetrics.Add(key);
                 switch (key)
                 {
                     case "AV": AttackVector = EnumParser.AttackVector(value); break;
@@ -128,22 +142,7 @@ namespace Cvss.Net
                 }
             }
 
-            void CheckParsed(string param)
-            {
-                if (!parsedParams.Contains(param))
-                {
-                    throw new ArgumentException($"Required metric missing \"{param}\"", nameof(vector));
-                }
-            }
-
-            CheckParsed("AV");
-            CheckParsed("AC");
-            CheckParsed("PR");
-            CheckParsed("UI");
-            CheckParsed("S");
-            CheckParsed("C");
-            CheckParsed("I");
-            CheckParsed("A");
+            CheckRequiredMetrics(parsedMetrics);
 
             CalculateScores();
         }
@@ -163,7 +162,28 @@ namespace Cvss.Net
 
         #region Helper
 
-        private void CalculateScores()
+        internal void CheckRequiredMetrics(IEnumerable<string> metricsSet)
+        {
+            var metricsSetList = metricsSet.ToList();
+            void CheckParsed(string param)
+            {
+                if (!metricsSetList.Contains(param))
+                {
+                    throw new ArgumentException($"Required metric missing \"{param}\"");
+                }
+            }
+
+            CheckParsed("AV");
+            CheckParsed("AC");
+            CheckParsed("PR");
+            CheckParsed("UI");
+            CheckParsed("S");
+            CheckParsed("C");
+            CheckParsed("I");
+            CheckParsed("A");
+        }
+
+        internal void CalculateScores()
         {
             double ImpactSubScore(Scope scope, double subScore)
             {
@@ -222,10 +242,10 @@ namespace Cvss.Net
                  AvailabilityRequirement.NumericValue()));
             var modifiedImpactSubScore = ImpactSubScore(ModifiedScope ?? Scope, impactSubScoreModified);
             var modifiedExploitabilitySubScore =
-                8.22 * ModifiedAttackVector.Modified(AttackVector,EnumExtensions.NumericValue) *
-                ModifiedAttackComplexity.Modified(AttackComplexity,EnumExtensions.NumericValue) *
-                ModifiedPrivilegesRequired.Modified(PrivilegesRequired,required => required.NumericValue(ModifiedScope ?? Scope)) *
-                ModifiedUserInteraction.Modified(UserInteraction,EnumExtensions.NumericValue);
+                8.22 * ModifiedAttackVector.Modified(AttackVector, EnumExtensions.NumericValue) *
+                ModifiedAttackComplexity.Modified(AttackComplexity, EnumExtensions.NumericValue) *
+                ModifiedPrivilegesRequired.Modified(PrivilegesRequired, required => required.NumericValue(ModifiedScope ?? Scope)) *
+                ModifiedUserInteraction.Modified(UserInteraction, EnumExtensions.NumericValue);
             EnvironmentalScore = TempScore(
                 Score(ModifiedScope ?? Scope, modifiedImpactSubScore, modifiedExploitabilitySubScore));
         }

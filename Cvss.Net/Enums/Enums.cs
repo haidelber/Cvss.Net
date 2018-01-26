@@ -82,4 +82,9 @@
         Medium,
         Low
     }
+
+    public enum CvssVersion
+    {
+        V3
+    }
 }

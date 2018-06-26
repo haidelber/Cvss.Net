@@ -1,10 +1,9 @@
 # Cvss.Net
 
+![NuGet](https://img.shields.io/nuget/v/Cvss.Net.svg)
 ![NuGet](https://img.shields.io/nuget/dt/Cvss.Net.svg)
 
 A utility library to handle Common Vulnerability Scoring System (CVSS) v3 Vectors and calculate their scores.
-
-You find the latest published version on [nuget.org](https://www.nuget.org/packages/Cvss.Net/)
 
 # Usage
 

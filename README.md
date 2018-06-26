@@ -1,5 +1,6 @@
 # Cvss.Net
 
+[![DOI](https://zenodo.org/badge/118878945.svg)](https://zenodo.org/badge/latestdoi/118878945)
 [![NuGet](https://img.shields.io/nuget/v/Cvss.Net.svg)](https://www.nuget.org/packages/Cvss.Net/)
 [![NuGet](https://img.shields.io/nuget/dt/Cvss.Net.svg)](https://www.nuget.org/packages/Cvss.Net/)
 
